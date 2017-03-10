@@ -9,7 +9,7 @@
 # $plugin['allow_html_help'] = 0;
 
 $plugin['name'] = 'soo_page_break';
-$plugin['version'] = '0.1.0';
+$plugin['version'] = '0.1.1';
 $plugin['author'] = 'Jeff Soo';
 $plugin['author_uri'] = 'http://ipsedixit.net/txp/';
 $plugin['description'] = 'Pagination within an article';
@@ -687,6 +687,14 @@ or
 bc. <txp:soo_article_page_nav wraptag="ol" break="li" text="{title}" />
 
 h2(#history). Version History
+
+h3. 0.1.1 (2017-03-09)
+
+* Removed @soo_page_break@ tag
+* Added @soo_article_page_title@ tag
+* New options for @soo_article_page_link@ and @soo_article_page_nav@
+
+Initial release.
 
 h3. 0.1.0 (2017-03-08)
 
