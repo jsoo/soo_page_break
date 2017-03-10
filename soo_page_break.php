@@ -46,8 +46,8 @@ defined('txpinterface') or @include_once('zem_tpl.php');
 // Register public tags.
 if (class_exists('\Textpattern\Tag\Registry')) {
     Txp::get('\Textpattern\Tag\Registry')
-        ->register('soo_page_break')
         ->register('soo_article_page')
+        ->register('soo_article_page_title')
         ->register('soo_article_page_number')
         ->register('soo_article_page_link')
         ->register('soo_article_page_nav')
@@ -56,28 +56,39 @@ if (class_exists('\Textpattern\Tag\Registry')) {
         ;
 }
 
-function soo_page_break($atts)
-{
-    lAtts(array(), $atts);
-    assert_article();
-    return '';
-}
-
 function soo_article_page($atts)
 {
-    global $thisarticle, $is_article_body, $pg, $soo_article_pages, $soo_article_page_id;
+    global $thisarticle, $is_article_body, $pg, $soo_article_pages;
+    
+    static $soo_article_page_id;
 
     assert_article();
     
     extract(lAtts(array(
-    'delimiter' => '<txp:soo_page_break />',
-    'quiet'     => 0,
+        'delimiter' => '[break]',
+        'quiet'     => 0,
     ), $atts));
     
     if ($soo_article_page_id != $thisarticle['thisid']) {
         $soo_article_page_id = $thisarticle['thisid'];
-        $pages = array_map('trim', explode($delimiter, $thisarticle['body']));
-        $soo_article_pages = array_combine(range(1, count($pages)), $pages);
+        $soo_article_pages = array();
+        
+        $delimiter = preg_quote($delimiter, '%');
+        $delimiter = '%(<p>)?'.$delimiter.'\s*(</p>)?%';
+        $pages = preg_split($delimiter, $thisarticle['body']);
+        $pages = array_map('trim', $pages);
+                
+        $matches = array();
+        foreach ($pages as $page) {
+            if (preg_match('/<(h\d).*?>(.+)?<\/\1>/', $page, $matches)) {
+                $header = $matches[2];
+            } else {
+                $header = '';
+            }
+            $soo_article_pages[] = array('header' => $header, 'body' => $page);
+        }
+        
+        $soo_article_pages = array_combine(range(1, count($pages)), $soo_article_pages);
     }
     
     $page_number = $pg ? $pg : 1;
@@ -90,10 +101,32 @@ function soo_article_page($atts)
     
     $was_article_body = $is_article_body;
     $is_article_body = 1;
-    $out = parse($soo_article_pages[$page_number]);    
+    $out = parse($soo_article_pages[$page_number]['body']);    
     $is_article_body = $was_article_body;
 
     return $out;
+}
+
+function soo_article_page_title($atts)
+{
+    global $pg, $soo_article_pages;
+    
+    extract(lAtts(array(
+        'page_number' => $pg ? $pg : 1,
+        'class'       => '',
+        'wraptag'     => '',
+    ), $atts));
+    
+    assert_article();
+    
+    if (! is_int($page_number) || $page_number < 1) return '';
+    $num_pages = count($soo_article_pages);
+    if ($num_pages == 1 || $num_pages < $page_number) return '';
+
+    if ($title = $soo_article_pages[$page_number]['header']) {
+        return tag($title, $wraptag, array('class'=>$class));
+    }
+    
 }
 
 function soo_article_page_number($atts)
@@ -103,23 +136,19 @@ function soo_article_page_number($atts)
     assert_article();
     
     extract(lAtts(array(
-    'text'    => '{page} {pg} {of} {total}',
-    'class'   => '',
-    'wraptag' => '',
+        'text'    => '{page} {pg} {of} {total}',
+        'class'   => '',
+        'wraptag' => '',
     ), $atts));
     
     if (count($soo_article_pages) < 2) {
         return '';
     }
     
-    $replace = array(
-        '{page}'  => gTxt('page'),
-        '{of}'    => gTxt('of'),
+    $text = _soo_article_page_replace($text, array(
         '{total}' => count($soo_article_pages),
         '{pg}'    => $pg ? $pg : 1,
-    );
-    $text = str_replace(array_keys($replace), $replace, $text);
-    
+    ));    
     return tag($text, $wraptag, array('class'=>$class));
 }
 
@@ -130,54 +159,58 @@ function soo_article_page_link($atts)
     assert_article();
     
     extract(lAtts(array(
-    'text'       => '{page} {pg}',
-    'rel'        => 'next',
-    'rev'        => '',
-    'showalways' => 0,
-    'title'      => '',
-    'class'      => '',
-    'escape'     => 'html',
+        'page_number' => 0,
+        'text'        => '{next}',
+        'rel'         => 'next',
+        'rev'         => '',
+        'showalways'  => 0,
+        'title'       => '',
+        'class'       => '',
+        'escape'      => 'html',
     ), $atts));
     
-    $page_number = $pg ? (int) $pg : 1;
+    $thispage = $pg ? (int) $pg : 1;
+    
     $total = count($soo_article_pages);
     if (($page_number > $total) || ($total == 1)) {
         return $showalways ? $text : '';
     }
 
     $goto = array(
-        'prev'  => $page_number > 1 ? $page_number - 1 : null,
-        'next'  => $page_number < $total ? $page_number + 1 : null,
+        'prev'  => $thispage > 1 ? $thispage - 1 : null,
+        'next'  => $thispage < $total ? $thispage + 1 : null,
         'first' => 1,
         'last'  => $total,
     );
-        
+    
     if (! array_key_exists($rel, $goto)) {
-        if (is_int($text) && ($text > 0) && ($text <= $total)) {
+        if ($page_number > 0 && $page_number <= $total) {
             if (! $rel) {
-                if (in_array($text, $goto)) {
-                    $rel = array_search($text, $goto);
+                if (in_array($page_number, $goto)) {
+                    $rel = array_search($page_number, $goto);
                 } else {
-                    $rel = 'page '.$text;
+                    $rel = 'page '.$page_number;
                 }
             }
-            $goto[$rel] = $text;
+            $goto[$rel] = $page_number;
         } else {
-            trigger_error(gTxt('invalid_attribute_value', array('{name}' => $rel)), E_USER_NOTICE);
+            trigger_error(gTxt('invalid_attribute_value', array('{name}' => $page_number)), E_USER_NOTICE);
             return '';
         }
     }
-    
-    $replace = array(
-        '{page}' => gTxt('page'),
-        '{next}' => gTxt('next'),
-        '{prev}' => gTxt('prev'),
+        
+    $dict = array(
         '{pg}'    => $goto[$rel],
+        '{title}' => soo_article_page_title(array('page_number' => $goto[$rel])),
     );
-    $text = str_replace(array_keys($replace), $replace, $text);
-    
+    $text = _soo_article_page_replace($text, $dict);
+        
     if ($goto[$rel] === null) {
         return $showalways ? $text : '';
+    }
+    
+    if ($title) {
+        $title = _soo_article_page_replace($title, $dict);
     }
     
     $url = permlinkurl($thisarticle);
@@ -198,12 +231,12 @@ function soo_article_page_link($atts)
         if (isset($revler[$rel])) {
             $rev = $revler[$rel];
         } elseif (! $rev) {
-            if ($page_number == 1) {
+            if ($thispage == 1) {
                 $rev = 'first';
-            } elseif ($page_number == $total) {
+            } elseif ($thispage == $total) {
                 $rev = 'last';
             } else {
-                $rev = 'page '.$page_number;
+                $rev = 'page '.$thispage;
             }
         }
         
@@ -230,24 +263,33 @@ function soo_article_page_nav($atts)
     assert_article();
     
     extract(lAtts(array(
-    'class'        => __FUNCTION__,
-	'active_class' => 'here',
-    'wraptag'      => '',
-    'break'        => 'br',
+        'text'         => '{pg}',
+        'class'        => __FUNCTION__,
+        'active_class' => 'here',
+        'wraptag'      => '',
+        'break'        => 'br',
     ), $atts));
     
     $out = array();
-    $link_atts = array('class' => $class);
+    $link_atts = array(
+        'class' => $class,
+        'text'  => $text,
+        'rel'   => '',
+    );
     $active_class = $active_class ? "class=\"$active_class\"" : '';
     $page_number = $pg ? (int) $pg : 1;
     
     for ($n = 1; $n <= $total; $n++) {
         if ($n == $page_number) {
-            $out[] = tag($n, 'span', $active_class);
+            $text = _soo_article_page_replace($text, array(
+                '{title}' => soo_article_page_title(array('page_number' => $n)),
+                '{pg}'    => $n,
+            ));
+            
+            $out[] = tag($text, 'span', $active_class);
         } else {
+            $link_atts['page_number'] = $n;
             $link_atts['title'] = gTxt('page').' '.$n;
-            $link_atts['text'] = $n;
-            $link_atts['rel'] = '';
             $out[] = soo_article_page_link($link_atts);
         }
     }
@@ -266,8 +308,8 @@ function soo_if_article_page($atts, $thing)
         return parse($thing);
     }
     extract(lAtts(array(
-    'first' => null,
-    'last'  => null,
+        'first' => null,
+        'last'  => null,
     ), $atts));
     
     $page = $pg ? $pg : 1;
@@ -294,9 +336,9 @@ function soo_if_article_page($atts, $thing)
 function soo_article_page_search_url($atts, $thing)
 {
     extract(lAtts(array(
-    'class'  => '',
-    'title'  => '',
-    'escape' => 'html',
+        'class'  => '',
+        'title'  => '',
+        'escape' => 'html',
     ), $atts));
 
     global $thisarticle, $q, $soo_article_pages;
@@ -309,8 +351,8 @@ function soo_article_page_search_url($atts, $thing)
     }
     
     $found = false;
-    foreach ($soo_article_pages as $n => $body) {
-        if (stripos($body, $q)) {
+    foreach ($soo_article_pages as $n => $page) {
+        if (stripos($page['body'], $q)) {
             $found = true;
             break;
         }
@@ -347,6 +389,18 @@ function soo_article_page_search_url($atts, $thing)
         'title' => $title,
         'class' => $class
     ));
+}
+
+function _soo_article_page_replace($text, $extra = array())
+{
+    $dict = array(
+    '{page}' => gTxt('page'),
+    '{of}'   => gTxt('of'),
+    '{next}' => gTxt('next'),
+    '{prev}' => gTxt('prev'),
+    ) + $extra;
+    
+    return str_replace(array_keys($dict), $dict, $text);
 }
 
 # --- END PLUGIN CODE ---
@@ -392,8 +446,8 @@ h2. Contents
 * "Overview":#overview
 * "Usage":#usage
 * "Tags":#tags
-** "soo_page_break":#soo_page_break
 ** "soo_article_page":#soo_article_page
+** "soo_article_page_title":#soo_article_page_title
 ** "soo_article_page_number":#soo_article_page_number
 ** "soo_article_page_link":#soo_article_page_link
 ** "soo_article_page_nav":#soo_article_page_nav
@@ -416,21 +470,29 @@ All of these tags %(required)require% article context.
 
 h2(#usage). Usage
 
-Add page breaks to an article by inserting a @soo_page_break@ tag or other delimiter of your choice. @soo_page_break@ is recommended as it is unambiguous, does some error checking, and outputs nothing should the article be seen by means of an ordinary @body@ tag. If Textile is enabled, make sure @p@ tags aren't being added around the delimiter, to avoid dangling @p@ tags in your page output. For example:
+Add page breaks to an article by inserting [break] (the default delimiter) or other delimiter of your choice. For example:
 
  <pre><code>&quot;No,&quot; said Mr. Prendergast.
 
-notextile. notextile. &lt;txp:soo_page_break /&gt;
+notextile. [break]
 
 notextile. h2. Chapter Eight</code></pre>
+
+For Textile-enabled articles be sure to surround the break delimiter with blank lines, otherwise the break may occur in the middle of an HTML element, producing invalid HTML output. Do not use HTML special characters in your break delimiter, unless you are certain it will never undergo Textile transformation.
 
 @soo_article_page@ is a drop-in replacement for @body@. If the article has page breaks, it will output the page indicated by the URL. *soo_page_break* uses the standard Txp pagination context (i.e., the @pg@ parameter in the URL's query string). Txp doesn't apply pagination to individual articles, so *soo_page_break* does not conflict with standard Txp behavior.
 
 The rest of the tags depend on having a @soo_article_page@ tag earlier in the article tag or form. You can run @soo_article_page@ in quiet mode if necessary. It caches the pages it finds, so there should be no real performance hit for running it twice, even for a very long article.
 
+@soo_article_page_title@ returns the contents of the first HTML heading element (i.e., @h1@, @h2@, etc.) in a page. Rather than using the tag directly, it is generally more useful to access it through the text-replacement feature of @soo_article_page_link@ or @soo_article_page_nav@, as in the following example, 
+
+bc. <txp:soo_article_page_link text="{title}" />
+
+which displays a link to the next page, using the page title as the link text.
+
 @soo_article_page_number@ displays page info, e.g. "Page 1 of 4". 
 @soo_article_page_link@ outputs a link to the first, previous, next, or last page, or to a particular page number. 
-@soo_article_page_nav@ outputs a nav widget with numbered links for all pages.
+@soo_article_page_nav@ outputs a nav widget for all pages in the article. By default it uses page numbers as link text, but can be configured to show page titles and/or other text.
 
 @soo_if_article_page@ is a conditional with various possible tests pertaining to article pages.
 
@@ -438,24 +500,31 @@ The rest of the tags depend on having a @soo_article_page@ tag earlier in the ar
 
 h2(#tags). Tags
 
-h3(#soo_page_break). soo_page_break
-
-pre. <txp:soo_page_break />
-
-h4. Attributes
-
-None.
-
 h3(#soo_article_page). soo_article_page
 
 pre. <txp:soo_article_page />
 
 h4. Attributes
 
-* @delimiter@ _(text)_ %(default)default% @<txp:soo_page_break />@
+* @delimiter@ _(text)_ %(default)default% @[break]@
 Text to insert into an article body to indicate a page break
 * @quiet@ _(boolean)_ %(default)default% @0@
 Whether or not to run in quiet mode, i.e., calculate page numbers without showing any output
+
+If using a delimiter other than the default @[break]@, and using more than one @soo_article_page@ tag in an article form, set the custom @delimiter@ attribute in the first of the @soo_article_page@ tags.
+
+h3(#soo_article_page_title). soo_article_page_title
+
+pre. <txp:soo_article_page_title />
+
+h4. Attributes
+
+* @page_number@ _(int)_ %(default)default% current page
+Page number of the title to display
+* @class@ _(text)_ %(default)default% empty
+HTML class attribute for the link
+* @wraptag@ _(text)_ %(default)default% empty
+HTML tag name (no brackets) to wrap the output
 
 h3(#soo_article_page_number). soo_article_page_number
 
@@ -464,7 +533,7 @@ pre. <txp:soo_article_page_number />
 h4. Attributes
 
 * @text@ _(text)_ %(default)default% @{page} {pg} {of} {total}@
-Link text. @{pg}@ and @{total}@ will be replaced by numbers. @{page}@ and @{of}@ will be replaced by @gTxt()@ values, per Txp internationalisation settings.
+Output format. @{pg}@ and @{total}@ will be replaced by numbers. @{page}@ and @{of}@ will be replaced by @gTxt()@ values, per Txp internationalisation settings.
 * @class@ _(text)_ %(default)default% empty
 HTML class attribute for the link
 * @wraptag@ _(text)_ %(default)default% empty
@@ -476,12 +545,14 @@ pre. <txp:soo_article_page_link />
 
 h4. Attributes
 
-%(required)Required%: the tag must be given one of four standard @rel@ attributes (see below), or else the @text@ attribute must be an integer identifying a valid page number.
+%(required)Required%: by default this produces a link to the next page, per the @rel@ attribute. If you change @rel@ to something other than @first@, @last@, or @prev@, you must set @page_number@ to a valid article page number to get the tag to produce a link.
 
-* @text@ _(text)_ %(default)default% @{page} {pg}@
-Link text. If @text@ is an integer and a valid page number, and if @rel@ is not one of the four standard values, @text@ will also set the page number of the link URL. Otherwise, @{pg}@ will be replaced by the page number the link points to, and @{page}@, @{prev}@, and @{next}@ will be replaced by @gTxt()@ values, per Txp internationalisation settings.
+* @page_number@ _(int)_ %(default)default% 0
+Page number to link to, if not indicated by @rel@
+* @text@ _(text)_ %(default)default% @{next}@
+Link text. @{pg}@ will be replaced by the page number the link points to, @{page}@, @{prev}@, and @{next}@ will be replaced by @gTxt()@ values, per Txp internationalisation settings, and @{title}@ will be replaced by the @soo_article_page_title@ of the linked page, if available.
 * @rel@ _(text)_ %(default)default% @next@
-Link relationship. If set to @first@, @last@, @prev@, or @next@ the link URL will point to that page. Otherwise, the link page number will be determined by @text@ (see above). If you set @rel=""@ and have an appropriate value for @text@, the HTML @rel@ attribute will be determined automatically.
+Link relationship. If set to @first@, @last@, @prev@, or @next@ the link URL will point to that page. Otherwise, the link page number will be determined by @page_number@ (see above). If you set @rel=""@ the HTML @rel@ attribute will be determined automatically.
 * @rev@ _(text)_ %(default)default% empty
 Reversed link relationship. Leave unset to let the tag add an appropriate value.
 * @showalways@ _(boolean)_ %(default)default% @0@
@@ -489,7 +560,7 @@ Whether or not to output @text@ if the link is invalid (e.g., @rel="next"@ when 
 * @class@ _(text)_ %(default)default% empty
 HTML class attribute for the link
 * @title@ _(text)_ %(default)default% empty
-HTML title attribute for the link
+HTML title attribute for the link. Uses the same text replacement formula as @text@, above. If you include @{title}@ here and use Textile in your articles, you should also unset @escape@.
 * @escape@ _("html" or unset)_ %(default)default% html
 Escape HTML entities such as <, > and & in the @title@ attribute
 
@@ -499,6 +570,8 @@ pre. <txp:soo_article_page_nav />
 
 h4. Attributes
 
+* @text@ _(text)_ %(default)default% @{pg}@ (page number)
+Link text. Uses the same text replacement formula as @soo_article_page_link@'s @text@ and @title@ attributes.
 * @class@ _(text)_ %(default)default% soo_article_page_nav
 HTML class attribute for the wraptag
 * @active_class@ _(text)_ %(default)default% here
@@ -555,17 +628,17 @@ h2(#examples). Examples
 
 h3. In an article form
 
-bc. <txp:soo_article_page quiet="1" />
+bc. <txp:soo_article_page quiet="1" delimiter="[page break]" />
 <header>
     <h2><txp:title /></h2>
-    <txp:soo_article_page_number wraptag="h3" />
+    <txp:soo_article_page_number wraptag="p" />
 </header>
 <article>
     <txp:soo_article_page />
     <txp:soo_article_page_nav wraptag="ul" break="li" />
 </article>
 
-Running @soo_article_page@ in quiet mode is necessary here because the @soo_article_page_number@ tag comes before the article body (i.e., the second @soo_article_page@ tag). 
+Running @soo_article_page@ in quiet mode is necessary here because the @soo_article_page_number@ tag comes before the article body (i.e., the second @soo_article_page@ tag). Note that a custom @delimiter@ must be set in the first of those tags.
 
 This form would work fine for normal (i.e., single-page) articles too, where @soo_article_page_number@ and @soo_article_page_nav@ will output nothing, and @soo_article_page@ will output the entire article body.
 
@@ -600,6 +673,18 @@ bc. <txp:soo_article_page quiet="1" />
     <br />
     <small><txp:soo_article_page_search_url /> : <txp:search_result_date /></small>
 </p>
+
+h3. @soo_article_page_nav@ as a numbered widget, à la Google
+
+bc. <txp:soo_article_page_nav />
+
+h3. @soo_article_page_nav@ as a table of contents
+
+bc. <txp:soo_article_page_nav wraptag="ul" break="li" text="{pg}. {title}" />
+
+or
+
+bc. <txp:soo_article_page_nav wraptag="ol" break="li" text="{title}" />
 
 h2(#history). Version History
 
