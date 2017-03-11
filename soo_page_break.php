@@ -3,12 +3,6 @@
 // run this file at the command line to produce a plugin for distribution:
 // $ php abc_myplugin.php > abc_myplugin-0.1.txt
 
-// Allow raw HTML help, as opposed to Textile.
-// 0 = Plugin help is in Textile format, no raw HTML allowed (default).
-// 1 = Plugin help is in raw HTML.  Not recommended.
-# $plugin['allow_html_help'] = 0;
-
-$plugin['name'] = 'soo_page_break';
 $plugin['version'] = '0.1.1';
 $plugin['author'] = 'Jeff Soo';
 $plugin['author_uri'] = 'http://ipsedixit.net/txp/';
@@ -29,7 +23,7 @@ $plugin['description'] = 'Pagination within an article';
 // 3 = admin        : only on the admin side
 // 4 = admin+ajax   : only on admin side
 // 5 = public+admin+ajax   : on both the public and admin side
-$plugin['type'] = 0; 
+# $plugin['type'] = 0; 
 
 // Plugin 'flags' signal the presence of optional capabilities to the core plugin loader.
 // Use an appropriately OR-ed combination of these flags.
@@ -39,7 +33,7 @@ defined('PLUGIN_LIFECYCLE_NOTIFY') or define('PLUGIN_LIFECYCLE_NOTIFY', 0x0002);
 
 # $plugin['flags'] = PLUGIN_HAS_PREFS | PLUGIN_LIFECYCLE_NOTIFY;
 
-defined('txpinterface') or @include_once('zem_tpl.php');
+defined('txpinterface') or @include_once('../../textpattern-plugin-template/zem_tpl.php');
 
 # --- BEGIN PLUGIN CODE ---
 
@@ -407,58 +401,11 @@ function _soo_article_page_replace($text, $extra = array())
 
 if (0) {
 ?>
-<!-- CSS SECTION
-# --- BEGIN PLUGIN CSS ---
-<style type="text/css">
-div#sed_help pre {padding: 0.5em 1em; background: #eee; border: 1px dashed #ccc;}
-div#sed_help h1, div#sed_help h2, div#sed_help h3, div#sed_help h3 code {font-family: sans-serif; font-weight: bold;}
-div#sed_help h1, div#sed_help h2, div#sed_help h3 {margin-left: -1em;}
-div#sed_help h2, div#sed_help h3 {margin-top: 2em;}
-div#sed_help h1 {font-size: 2.4em;}
-div#sed_help h2 {font-size: 1.8em;}
-div#sed_help h3 {font-size: 1.4em;}
-div#sed_help h4 {font-size: 1.2em;}
-div#sed_help h5 {font-size: 1em;margin-left:1em;font-style:oblique;}
-div#sed_help h6 {font-size: 1em;margin-left:2em;font-style:oblique;}
-div#sed_help li {list-style-type: disc;}
-div#sed_help li li {list-style-type: circle;}
-div#sed_help li li li {list-style-type: square;}
-div#sed_help li a code {font-weight: normal;}
-div#sed_help li code:first-child {background: #ddd;padding:0 .3em;margin-left:-.3em;}
-div#sed_help li li code:first-child {background:none;padding:0;margin-left:0;}
-div#sed_help dfn {font-weight:bold;font-style:oblique;}
-div#sed_help .required, div#sed_help .warning {color:red;}
-div#sed_help .default {color:green;}
-</style>
-# --- END PLUGIN CSS ---
--->
-<!-- HELP SECTION
 # --- BEGIN PLUGIN HELP ---
-
- <div id="sed_help">
-
- <div id="toc">
 
 h1. soo_page_break
 
-h2. Contents
-
-* "Overview":#overview
-* "Usage":#usage
-* "Tags":#tags
-** "soo_article_page":#soo_article_page
-** "soo_article_page_title":#soo_article_page_title
-** "soo_article_page_number":#soo_article_page_number
-** "soo_article_page_link":#soo_article_page_link
-** "soo_article_page_nav":#soo_article_page_nav
-** "soo_if_article_page":#soo_if_article_page
-** "soo_article_page_search_url":#soo_article_page_search_url
-* "Examples":#examples
-* "History":#history
-
- </div>
-
-h2(#overview). Overview
+h2. Overview
 
 *soo_page_break* is a suite of tags for pagination within a single article. Add page breaks to an article body using the delimiter of your choice; show page information and navigation links; use conditionals to control output based on article page status; direct search results to the correct page of an article.
 
@@ -466,19 +413,11 @@ h3. Requirements
 
 This plugin was developed on Textpattern 4.6 and has not been tested on earlier versions.
 
-All of these tags %(required)require% article context.
+All of these tags article context.
 
-h2(#usage). Usage
+h2. Usage
 
-Add page breaks to an article by inserting [break] (the default delimiter) or other delimiter of your choice. For example:
-
- <pre><code>&quot;No,&quot; said Mr. Prendergast.
-
-notextile. [break]
-
-notextile. h2. Chapter Eight</code></pre>
-
-For Textile-enabled articles be sure to surround the break delimiter with blank lines, otherwise the break may occur in the middle of an HTML element, producing invalid HTML output. Do not use HTML special characters in your break delimiter, unless you are certain it will never undergo Textile transformation.
+Add page breaks to an article by inserting [break] (the default delimiter) or other delimiter of your choice. For Textile-enabled articles be sure to surround the break delimiter with blank lines, otherwise the break may occur in the middle of an HTML element, producing invalid HTML output. Do not use HTML special characters in your break delimiter, unless you are certain it will never undergo Textile transformation.
 
 @soo_article_page@ is a drop-in replacement for @body@. If the article has page breaks, it will output the page indicated by the URL. *soo_page_break* uses the standard Txp pagination context (i.e., the @pg@ parameter in the URL's query string). Txp doesn't apply pagination to individual articles, so *soo_page_break* does not conflict with standard Txp behavior.
 
@@ -498,90 +437,90 @@ which displays a link to the next page, using the page title as the link text.
 
 @soo_article_page_search_url@ can be used in a search results form to link to the first article page matching the search term.
 
-h2(#tags). Tags
+h2. Tags
 
-h3(#soo_article_page). soo_article_page
+h3. soo_article_page
 
 pre. <txp:soo_article_page />
 
 h4. Attributes
 
-* @delimiter@ _(text)_ %(default)default% @[break]@
+* @delimiter@ _(text)_ default @[break]@
 Text to insert into an article body to indicate a page break
-* @quiet@ _(boolean)_ %(default)default% @0@
+* @quiet@ _(boolean)_ default @0@
 Whether or not to run in quiet mode, i.e., calculate page numbers without showing any output
 
 If using a delimiter other than the default @[break]@, and using more than one @soo_article_page@ tag in an article form, set the custom @delimiter@ attribute in the first of the @soo_article_page@ tags.
 
-h3(#soo_article_page_title). soo_article_page_title
+h3. soo_article_page_title
 
 pre. <txp:soo_article_page_title />
 
 h4. Attributes
 
-* @page_number@ _(int)_ %(default)default% current page
+* @page_number@ _(int)_ default current page
 Page number of the title to display
-* @class@ _(text)_ %(default)default% empty
+* @class@ _(text)_ default empty
 HTML class attribute for the link
-* @wraptag@ _(text)_ %(default)default% empty
+* @wraptag@ _(text)_ default empty
 HTML tag name (no brackets) to wrap the output
 
-h3(#soo_article_page_number). soo_article_page_number
+h3. soo_article_page_number
 
 pre. <txp:soo_article_page_number />
 
 h4. Attributes
 
-* @text@ _(text)_ %(default)default% @{page} {pg} {of} {total}@
+* @text@ _(text)_ default @{page} {pg} {of} {total}@
 Output format. @{pg}@ and @{total}@ will be replaced by numbers. @{page}@ and @{of}@ will be replaced by @gTxt()@ values, per Txp internationalisation settings.
-* @class@ _(text)_ %(default)default% empty
+* @class@ _(text)_ default empty
 HTML class attribute for the link
-* @wraptag@ _(text)_ %(default)default% empty
+* @wraptag@ _(text)_ default empty
 HTML tag name (no brackets) to wrap the output
 
-h3(#soo_article_page_link). soo_article_page_link
+h3. soo_article_page_link
 
 pre. <txp:soo_article_page_link />
 
 h4. Attributes
 
-%(required)Required%: by default this produces a link to the next page, per the @rel@ attribute. If you change @rel@ to something other than @first@, @last@, or @prev@, you must set @page_number@ to a valid article page number to get the tag to produce a link.
+Required: by default this produces a link to the next page, per the @rel@ attribute. If you change @rel@ to something other than @first@, @last@, or @prev@, you must set @page_number@ to a valid article page number to get the tag to produce a link.
 
-* @page_number@ _(int)_ %(default)default% 0
+* @page_number@ _(int)_ default 0
 Page number to link to, if not indicated by @rel@
-* @text@ _(text)_ %(default)default% @{next}@
+* @text@ _(text)_ default @{next}@
 Link text. @{pg}@ will be replaced by the page number the link points to, @{page}@, @{prev}@, and @{next}@ will be replaced by @gTxt()@ values, per Txp internationalisation settings, and @{title}@ will be replaced by the @soo_article_page_title@ of the linked page, if available.
-* @rel@ _(text)_ %(default)default% @next@
+* @rel@ _(text)_ default @next@
 Link relationship. If set to @first@, @last@, @prev@, or @next@ the link URL will point to that page. Otherwise, the link page number will be determined by @page_number@ (see above). If you set @rel=""@ the HTML @rel@ attribute will be determined automatically.
-* @rev@ _(text)_ %(default)default% empty
+* @rev@ _(text)_ default empty
 Reversed link relationship. Leave unset to let the tag add an appropriate value.
-* @showalways@ _(boolean)_ %(default)default% @0@
+* @showalways@ _(boolean)_ default @0@
 Whether or not to output @text@ if the link is invalid (e.g., @rel="next"@ when you are on the last page).
-* @class@ _(text)_ %(default)default% empty
+* @class@ _(text)_ default empty
 HTML class attribute for the link
-* @title@ _(text)_ %(default)default% empty
+* @title@ _(text)_ default empty
 HTML title attribute for the link. Uses the same text replacement formula as @text@, above. If you include @{title}@ here and use Textile in your articles, you should also unset @escape@.
-* @escape@ _("html" or unset)_ %(default)default% html
+* @escape@ _("html" or unset)_ default html
 Escape HTML entities such as <, > and & in the @title@ attribute
 
-h3(#soo_article_page_nav). soo_article_page_nav
+h3. soo_article_page_nav
 
 pre. <txp:soo_article_page_nav />
 
 h4. Attributes
 
-* @text@ _(text)_ %(default)default% @{pg}@ (page number)
+* @text@ _(text)_ default @{pg}@ (page number)
 Link text. Uses the same text replacement formula as @soo_article_page_link@'s @text@ and @title@ attributes.
-* @class@ _(text)_ %(default)default% soo_article_page_nav
+* @class@ _(text)_ default soo_article_page_nav
 HTML class attribute for the wraptag
-* @active_class@ _(text)_ %(default)default% here
+* @active_class@ _(text)_ default here
 HTML class attribute for the @span@ tag containing the current page number
-* @wraptag@ _(text)_ %(default)default% empty
+* @wraptag@ _(text)_ default empty
 HTML tag name (no brackets) to wrap the output
-* @break@ _(text)_ %(default)default% br
+* @break@ _(text)_ default br
 HTML tag name (no brackets) or text to separate items
 
-h3(#soo_if_article_page). soo_if_article_page
+h3. soo_if_article_page
 
 pre. <txp:soo_if_article_page>
     Output if true
@@ -591,8 +530,8 @@ pre. <txp:soo_if_article_page>
 
 h4. Attributes
 
-* @first@ _(boolean or unset)_ %(default)default% unset
-* @last@ _(boolean or unset)_ %(default)default% unset
+* @first@ _(boolean or unset)_ default unset
+* @last@ _(boolean or unset)_ default unset
 
 h4. Possible conditional tests:
 
@@ -609,7 +548,7 @@ h4. Possible conditional tests:
 ; @first="0" last="0"@
 : Is this a page other than the first or last page?
 
-h3(#soo_article_page_search_url). soo_article_page_search_url
+h3. soo_article_page_search_url
 
 pre. <txp:soo_article_page_search_url /> <!-- Link text is the URL -->
 
@@ -617,14 +556,14 @@ pre. <txp:soo_article_page_search_url>Link text</txp:soo_article_page_search_url
 
 h4. Attributes
 
-* @class@ _(text)_ %(default)default% empty
+* @class@ _(text)_ default empty
 HTML class attribute for the link
-* @title@ _(text)_ %(default)default% empty
+* @title@ _(text)_ default empty
 HTML title attribute for the link
-* @escape@ _("html" or unset)_ %(default)default% html
+* @escape@ _("html" or unset)_ default html
 Escape HTML entities such as <, > and & in the @title@ attribute
 
-h2(#examples). Examples
+h2. Examples
 
 h3. In an article form
 
@@ -686,7 +625,7 @@ or
 
 bc. <txp:soo_article_page_nav wraptag="ol" break="li" text="{title}" />
 
-h2(#history). Version History
+h2. Version History
 
 h3. 0.1.1 (2017-03-09)
 
@@ -700,10 +639,8 @@ h3. 0.1.0 (2017-03-08)
 
 Initial release.
 
- </div>
- 
 # --- END PLUGIN HELP ---
--->
+
 <?php
 }
 
