@@ -1,12 +1,8 @@
 # soo_page_break
 
-This is a plugin for [Textpattern](https://github.com/textpattern/textpattern). It provides a suite of tags 
-for handling articles with body text marked up according to a couple of very simple rules: indicate page 
-breaks with "[&#8203;break]" (or another delimiter of your choice), and somewhere after the break put a heading 
-element (`h1`, `h2`, etc.) containing the title for that page.
+This is a plugin for [Textpattern](https://github.com/textpattern/textpattern). It provides a suite of tags for handling articles with body text marked up according to a couple of very simple rules: indicate page breaks with "[&#8203;break]" (or another delimiter of your choice), and somewhere after the break put a heading element (`h1`, `h2`, etc.) containing the title for that page.
 
-See http://ipsedixit.net/txp/157/soo_page_break for further description to and  download the latest version, or grab the the compiled code from the [GitHub repo](https://github.com/jsoo/soo_page_break/releases). Either way, copy the full contents of the compiled file and paste into the 
-[Textpattern plugin installer](https://docs.textpattern.io/administration/plugins-panel), and follow the instructions from there.
+See http://ipsedixit.net/txp/157/soo_page_break for further description to and  download the latest version, or grab the the compiled code from the [GitHub repo](https://github.com/jsoo/soo_page_break/releases). Either way, copy the full contents of the compiled file and paste into the [Textpattern plugin installer](https://docs.textpattern.io/administration/plugins-panel), and follow the instructions from there.
 
 ## Contents
 
@@ -65,7 +61,7 @@ The rest of the tags depend on having a `soo_article_page` tag earlier in the ar
 which displays a link to the next page, using the page title as the link text.
 
 `soo_article_page_number` displays page info, e.g. "Page 1 of 4". 
-`soo_article_page_link` outputs a link to the first, previous, next, or last page, or to a particular page number. 
+`soo_article_page_link` outputs a link to the first, previous, next, or last page, or to a particular page number.
 `soo_article_page_nav` outputs a nav widget for all pages in the article. By default it uses page numbers as link text, but can be configured to show page titles and/or other text.
 
 `soo_if_article_page` is a conditional with various possible tests pertaining to article pages.
@@ -80,12 +76,14 @@ which displays a link to the next page, using the page title as the link text.
 
 #### Attributes
 
-* `delimiter` _(text)_ default `[&#8203;break]`
-Text to insert into an article body to indicate a page break
-* `quiet` _(boolean)_ default `0`
-Whether or not to run in quiet mode, i.e., calculate page numbers without showing any output
+* `delimiter` _(text)_ default <code>[&#8203;break]</code>
 
-If using a delimiter other than the default `[&#8203;break]`, and using more than one `soo_article_page` tag in an article form, set the custom `delimiter` attribute in the first of the `soo_article_page` tags.
+  Text to insert into an article body to indicate a page break
+* `quiet` _(boolean)_ default `0`
+
+  Whether or not to run in quiet mode, i.e., calculate page numbers without showing any output
+
+If using a delimiter other than the default <code>[&#8203;break]</code>, and using more than one `soo_article_page` tag in an article form, set the custom `delimiter` attribute in the first of the `soo_article_page` tags.
 
 <h3 id="soo_article_page_title">soo_article_page_title</h3>
 
@@ -94,11 +92,14 @@ If using a delimiter other than the default `[&#8203;break]`, and using more tha
 #### Attributes
 
 * `page_number` _(int)_ default current page
-Page number of the title to display
+
+  Page number of the title to display
 * `class` _(text)_ default empty
-HTML class attribute for the link
+
+  HTML class attribute for the link
 * `wraptag` _(text)_ default empty
-HTML tag name (no brackets) to wrap the output
+
+  HTML tag name (no brackets) to wrap the output
 
 <h3 id="soo_article_page_number">soo_article_page_number</h3>
 
@@ -107,11 +108,14 @@ HTML tag name (no brackets) to wrap the output
 #### Attributes
 
 * `text` _(text)_ default `{page} {pg} {of} {total}`
-Output format. `{pg}` and `{total}` will be replaced by numbers. `{page}` and `{of}` will be replaced by `gTxt()` values, per Txp internationalisation settings.
+
+  Output format. `{pg}` and `{total}` will be replaced by numbers. `{page}` and `{of}` will be replaced by `gTxt()` values, per Txp internationalisation settings.
 * `class` _(text)_ default empty
-HTML class attribute for the link
+
+  HTML class attribute for the link
 * `wraptag` _(text)_ default empty
-HTML tag name (no brackets) to wrap the output
+
+  HTML tag name (no brackets) to wrap the output
 
 <h3 id="soo_article_page_link">soo_article_page_link</h3>
 
@@ -122,21 +126,29 @@ HTML tag name (no brackets) to wrap the output
 Required: by default this produces a link to the next page, per the `rel` attribute. If you change `rel` to something other than `first`, `last`, or `prev`, you must set `page_number` to a valid article page number to get the tag to produce a link.
 
 * `page_number` _(int)_ default 0
-Page number to link to, if not indicated by `rel`
+
+  Page number to link to, if not indicated by `rel`
 * `text` _(text)_ default `{next}`
-Link text. `{pg}` will be replaced by the page number the link points to, `{page}`, `{prev}`, and `{next}` will be replaced by `gTxt()` values, per Txp internationalisation settings, and `{title}` will be replaced by the `soo_article_page_title` of the linked page, if available.
+
+  Link text. `{pg}` will be replaced by the page number the link points to, `{page}`, `{prev}`, and `{next}` will be replaced by `gTxt()` values, per Txp internationalisation settings, and `{title}` will be replaced by the `soo_article_page_title` of the linked page, if available.
 * `rel` _(text)_ default `next`
-Link relationship. If set to `first`, `last`, `prev`, or `next` the link URL will point to that page. Otherwise, the link page number will be determined by `page_number` (see above). If you set `rel=""` the HTML `rel` attribute will be determined automatically.
+
+  Link relationship. If set to `first`, `last`, `prev`, or `next` the link URL will point to that page. Otherwise, the link page number will be determined by `page_number` (see above). If you set `rel=""` the HTML `rel` attribute will be determined automatically.
 * `rev` _(text)_ default empty
-Reversed link relationship. Leave unset to let the tag add an appropriate value.
+
+  Reversed link relationship. Leave unset to let the tag add an appropriate value.
 * `showalways` _(boolean)_ default `0`
-Whether or not to output `text` if the link is invalid (e.g., `rel="next"` when you are on the last page).
+
+  Whether or not to output `text` if the link is invalid (e.g., `rel="next"` when you are on the last page).
 * `class` _(text)_ default empty
-HTML class attribute for the link
+
+  HTML class attribute for the link
 * `title` _(text)_ default empty
-HTML title attribute for the link. Uses the same text replacement formula as `text`, above. If you include `{title}` here and use Textile in your articles, you should also unset `escape`.
+
+  HTML title attribute for the link. Uses the same text replacement formula as `text`, above. If you include `{title}` here and use Textile in your articles, you should also unset `escape`.
 * `escape` _("html" or unset)_ default html
-Escape HTML entities such as <, > and & in the `title` attribute
+
+  Escape HTML entities such as <, > and & in the `title` attribute
 
 <h3 id="soo_article_page_nav">soo_article_page_nav</h3>
 
@@ -145,15 +157,20 @@ Escape HTML entities such as <, > and & in the `title` attribute
 #### Attributes
 
 * `text` _(text)_ default `{pg}` (page number)
-Link text. Uses the same text replacement formula as `soo_article_page_link`'s `text` and `title` attributes.
+
+  Link text. Uses the same text replacement formula as `soo_article_page_link`'s `text` and `title` attributes.
 * `class` _(text)_ default soo_article_page_nav
-HTML class attribute for the wraptag
+
+  HTML class attribute for the wraptag
 * `active_class` _(text)_ default here
-HTML class attribute for the `span` tag containing the current page number
+
+  HTML class attribute for the `span` tag containing the current page number
 * `wraptag` _(text)_ default empty
-HTML tag name (no brackets) to wrap the output
+
+  HTML tag name (no brackets) to wrap the output
 * `break` _(text)_ default br
-HTML tag name (no brackets) or text to separate items
+
+  HTML tag name (no brackets) or text to separate items
 
 <h3 id="soo_if_article_page">soo_if_article_page</h3>
 
@@ -194,11 +211,14 @@ HTML tag name (no brackets) or text to separate items
 #### Attributes
 
 * `class` _(text)_ default empty
-HTML class attribute for the link
+
+  HTML class attribute for the link
 * `title` _(text)_ default empty
-HTML title attribute for the link
+
+  HTML title attribute for the link
 * `escape` _("html" or unset)_ default html
-Escape HTML entities such as <, > and & in the `title` attribute
+
+  Escape HTML entities such as <, > and & in the `title` attribute
 
 <h2 id="examples">Examples</h2>
 
