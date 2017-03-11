@@ -261,6 +261,10 @@ or
 
 <h2 id="history">History</h2>
 
+### 0.1.2 (2017-03-11)
+
+* Documentation update & reformatting
+
 ### 0.1.1 (2017-03-09)
 
 * Removed `soo_page_break` tag

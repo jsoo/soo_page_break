@@ -3,7 +3,7 @@
 // run this file at the command line to produce a plugin for distribution:
 // $ php abc_myplugin.php > abc_myplugin-0.1.txt
 
-$plugin['version'] = '0.1.1';
+$plugin['version'] = '0.1.2';
 $plugin['author'] = 'Jeff Soo';
 $plugin['author_uri'] = 'http://ipsedixit.net/txp/';
 $plugin['description'] = 'Pagination within an article';
